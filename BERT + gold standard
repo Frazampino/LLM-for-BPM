@@ -53,7 +53,6 @@ def analyze_bpmn_with_mbert(tasks_bpmn1, tasks_bpmn2, lanes_bpmn1, lanes_bpmn2, 
         "gateway_similarities": gateway_similarities
     }
 
-# Funzione per creare il gold standard
 def create_gold_standard(tasks_bpmn1, tasks_bpmn2, lanes_bpmn1, lanes_bpmn2, gateways_bpmn1, gateways_bpmn2):
     gold_standard_matches = []
 
@@ -67,7 +66,6 @@ def create_gold_standard(tasks_bpmn1, tasks_bpmn2, lanes_bpmn1, lanes_bpmn2, gat
                 }
                 gold_standard_matches.append(match)
 
-    # Confronto tra le lane
     for lane1 in lanes_bpmn1:
         for lane2 in lanes_bpmn2:
             if lane1['name'] == lane2['name']:
@@ -77,7 +75,6 @@ def create_gold_standard(tasks_bpmn1, tasks_bpmn2, lanes_bpmn1, lanes_bpmn2, gat
                 }
                 gold_standard_matches.append(match)
 
-    # Confronto tra i gateway
     for gateway1 in gateways_bpmn1:
         for gateway2 in gateways_bpmn2:
             gateway1_name = gateway1.get('name', '')
@@ -91,7 +88,6 @@ def create_gold_standard(tasks_bpmn1, tasks_bpmn2, lanes_bpmn1, lanes_bpmn2, gat
 
     return gold_standard_matches
 
-# Funzione per calcolare precisione e richiamo
 def calculate_precision_recall(gold_standard, similarities):
     true_positives = 0
     false_positives = 0
@@ -110,20 +106,17 @@ def calculate_precision_recall(gold_standard, similarities):
                 if similarity > 0.90:  # Se non è nel gold standard, è un falso positivo
                     false_positives += 1
 
-    # Calcolo i falsi negativi (corrispondenze corrette che non sono state trovate)
     for gold_match in gold_standard:
         task1_name = gold_match['task1_name']
         task2_name = gold_match['task2_name']
         if not any(sim['task1_name'] == task1_name and sim['task2_name'] == task2_name for sim in similarities):
             false_negatives += 1
 
-    # Calcola precisione e recall
     precision = true_positives / (true_positives + false_positives) if true_positives + false_positives > 0 else 0
     recall = true_positives / (true_positives + false_negatives) if true_positives + false_negatives > 0 else 0
     
     return precision, recall
 
-# Funzione per confrontare file BPMN
 def compare_bpmn_files(bpmn_file_1, bpmn_file_2):
     print("Converting files to XML...")
     process_1_xml = bpmn_to_xml(bpmn_file_1)
@@ -150,22 +143,17 @@ def compare_bpmn_files(bpmn_file_1, bpmn_file_2):
     for similarity in result["gateway_similarities"]:
         print(f"{similarity['gateway1_name'] or similarity['gateway1_id']} <=> {similarity['gateway2_name'] or similarity['gateway2_id']}: Similarity = {similarity['similarity']:.4f}")
 
-    # Creazione del gold standard
     gold_standard_matches = create_gold_standard(tasks_bpmn1, tasks_bpmn2, lanes_bpmn1, lanes_bpmn2, gateways_bpmn1, gateways_bpmn2)
 
-    # Calcolo precisione e richiamo
     precision, recall = calculate_precision_recall(gold_standard_matches, result["task_similarities"])
 
-    # Calcolo F1-Score
     f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
 
     print(f"\nPrecision: {precision:.4f}")
     print(f"Recall: {recall:.4f}")
     print(f"F1-Score: {f1_score:.4f}")
 
-# Esempio di utilizzo
 bpmn_file_1 = "Cologne.bpmn"  
 bpmn_file_2 = "Frankfurt.bpmn"  
 
-# Confronta i file BPMN
 compare_bpmn_files(bpmn_file_1, bpmn_file_2)
